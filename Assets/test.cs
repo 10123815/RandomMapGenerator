@@ -23,10 +23,10 @@ namespace RandomMapGenerator
 
         void Start ( )
         {
-            PerlinNoise noise = new PerlinNoise(to: Mathf.PI * 2, ampl:5, count: 8, freq:10);
+            PerlinNoise1D noise = new PerlinNoise1D(to: Mathf.PI * 2, ampl:5, count: 8, freq:10);
             for (float x = 0; x <= Mathf.PI * 2; x += 0.002f)
             {
-                _vs.Add(x, noise.PerlinNoise1D(x));
+                _vs.Add(x, noise.GetPixel(x));
             }
         }
 

@@ -2,7 +2,7 @@
 
 ** Auth: ysd
 ** Date: 31/10/2015 13:37
-** Desc: 生成Perlin噪声
+** Desc: 生成Perlin噪声，1D，2D；unity自带的就是辣鸡
 ** Vers: v1.0
 
 *************************************************************/
@@ -26,8 +26,6 @@ namespace RandomMapGenerator
         /// </summary>
         private float[] _permutation;
 
-        private ushort _sampleCount;
-
         private float _from;
 
         private float _to;
@@ -41,7 +39,6 @@ namespace RandomMapGenerator
         {
             _from = Mathf.Min(from, to);
             _to = Mathf.Max(from, to);
-            _sampleCount = sampleCount;
             _scale = (float)(sampleCount - 1) / (to - from);
             _permutation = new float[sampleCount];
             for (ushort i = 0; i < sampleCount; i++)
@@ -51,23 +48,8 @@ namespace RandomMapGenerator
         }
 
         /// <summary>
-        /// 非线性插值
-        /// </summary>
-        private float _Lerp (float left, float right, float t)
-        {
-            t = Mathf.Min(1.0f, t);
-            t = Mathf.Max(0.0f, t);
-            float ttt = t * t * t;
-            t = ttt * (3.0f * t * (2.0f * t - 5.0f) + 10.0f);
-            return (1.0f - t) * left + t * right;
-        }
-
-        /// <summary>
         /// 1D coherent noise
         /// </summary>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        /// <returns></returns>
         public float GetPixel (float x)
         {
             x = Mathf.Min(_to, x);
@@ -81,7 +63,9 @@ namespace RandomMapGenerator
 
             int left = Mathf.FloorToInt(x);
             int right = Mathf.CeilToInt(x);
-            return _Lerp(_permutation[left], _permutation[right], x - left);
+
+            float t = RMGUtility.SmoothCurve(x - left);
+            return RMGUtility.Lerp(_permutation[left], _permutation[right], t);
         }
 
     }
@@ -151,29 +135,6 @@ namespace RandomMapGenerator
         }
 
         /// <summary>
-        /// 线性插值
-        /// </summary>
-        /// <param name="t">距from的距离</param>
-        /// <returns></returns>
-        private float _Lerp (float from, float to, float t)
-        {
-            return (1 - t) * from + t * to;
-        }
-
-        /// <summary>
-        /// 光滑插值
-        /// </summary>
-        /// <param name="t"></param>
-        /// <returns></returns>
-        private float _SmoothCurve (float t)
-        {
-            t = Mathf.Min(1.0f, t);
-            t = Mathf.Max(0.0f, t);
-            float ttt = t * t * t;
-            return ttt * (3.0f * t * (2.0f * t - 5.0f) + 10.0f);
-        }
-
-        /// <summary>
         /// 双线性插值
         /// @---->*<--@
         ///       ↓
@@ -184,12 +145,12 @@ namespace RandomMapGenerator
         /// <returns></returns>
         private float _Lerp2D (uint x1, uint y1, uint x2, uint y2, float tx, float ty)
         {
-            tx = _SmoothCurve(tx);
-            ty = _SmoothCurve(ty);
+            tx = RMGUtility.SmoothCurve(tx);
+            ty = RMGUtility.SmoothCurve(ty);
 
-            return _Lerp(
-                _Lerp(_permutaion[x1, y1], _permutaion[x2, y1], tx),
-                _Lerp(_permutaion[x1, y2], _permutaion[x2, y2], tx),
+            return RMGUtility.Lerp(
+                RMGUtility.Lerp(_permutaion[x1, y1], _permutaion[x2, y1], tx),
+                RMGUtility.Lerp(_permutaion[x1, y2], _permutaion[x2, y2], tx),
                 ty);
         }
 
@@ -296,7 +257,7 @@ namespace RandomMapGenerator
             _amplitude = maxAmpl;
 
         }
-        
+
         /// <summary>
         /// 不大于x的最大2的指数
         /// </summary>

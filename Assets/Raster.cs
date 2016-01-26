@@ -16,7 +16,7 @@ using RandomMapGenerator;
 namespace RandomMapGenerator
 {
 
-    public struct RasterIndex
+    public struct RasterIndex : IEqualityComparer<RasterIndex>
     {
         public uint x;
         public uint y;
@@ -25,6 +25,24 @@ namespace RandomMapGenerator
             x = xx;
             y = yy;
         }
+
+        #region IEqualityComparer<RasterIndex> 成员
+
+        bool IEqualityComparer<RasterIndex>.Equals (RasterIndex obj1, RasterIndex obj2)
+        {
+            return obj1.x == obj2.x && obj1.y == obj2.y;
+        }
+
+        /// <summary>
+        /// 只要 x1, x2 < 100000，可以保证 y1 * 100000 + x1 != y2 * 100000 + x2；
+        /// 实际上，x12，y12为栅格坐标，不会大于100000.
+        /// </summary>
+        int IEqualityComparer<RasterIndex>.GetHashCode (RasterIndex obj)
+        {
+            return (obj.x + obj.y * 100000).GetHashCode();
+        }
+
+        #endregion
     }
 
     public class Raster
@@ -103,7 +121,7 @@ namespace RandomMapGenerator
             rand = Mathf.Max(0, rand);
 
             _Gird();
-            _RandomAdjust(rand);
+            _RandomAdjust(rand * _squareSize);
         }
 
         /// <summary>
@@ -123,7 +141,7 @@ namespace RandomMapGenerator
                 for (uint j = 0; j < n + 1; j++)
                 {
                     offset.x = width * i;
-                    offset.y = -height * j;
+                    offset.y = height * j;
                     if (i < m && j < n)
                         _squareCenters[i, j] = _squareCenters[0, 0] + offset;
                     _squareCorners[i, j] = _border.position + offset;
@@ -132,23 +150,35 @@ namespace RandomMapGenerator
 
         }
 
-        private void _RandomAdjust (float rand)
+        private void _RandomAdjust (float randOffset)
         {
             for (uint i = 1; i < m; i++)
             {
                 for (uint j = 1; j < n; j++)
                 {
                     Vector2 dir = Random.insideUnitCircle;
-                    _squareCorners[i, j] += dir;
+                    _squareCorners[i, j] += dir * randOffset;
                 }
             }
 
+            // 调整中心的位置
             for (uint i = 0; i < m; i++)
             {
                 for (uint j = 0; j < n; j++)
                 {
-                    _squareCenters[i, j].x = (_squareCorners[i, j].x + _squareCorners[i + 1, j].x + _squareCorners[i, j + 1].x + _squareCorners[i + 1, j + 1].x) / 4;
-                    _squareCenters[i, j].y = (_squareCorners[i, j].y + _squareCorners[i + 1, j].y + _squareCorners[i, j + 1].y + _squareCorners[i + 1, j + 1].y) / 4;
+                    _squareCenters[i, j].x = (
+                        _squareCorners[i, j].x +
+                        _squareCorners[i + 1, j].x +
+                        _squareCorners[i, j + 1].x +
+                        _squareCorners[i + 1, j + 1].x
+                        ) / 4;
+
+                    _squareCenters[i, j].y = (
+                        _squareCorners[i, j].y +
+                        _squareCorners[i + 1, j].y +
+                        _squareCorners[i, j + 1].y +
+                        _squareCorners[i + 1, j + 1].y
+                        ) / 4;
                 }
             }
         }
@@ -187,10 +217,7 @@ namespace RandomMapGenerator
             float minSize = Mathf.Min(_border.size.x, _border.size.y);
             radius = Mathf.Min(minSize * 0.9f, radius);
             uint radiusNumber = (uint)(radius / _squareSize);
-
-            // 估计个数
-            uint num = (uint)(0.35f * radius);
-
+            
             List<RasterIndex> result = new List<RasterIndex>();
 
             // 第一个栅格的位置
