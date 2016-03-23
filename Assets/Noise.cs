@@ -2,15 +2,12 @@
 
 ** Auth: ysd
 ** Date: 31/10/2015 13:37
-** Desc: 生成Perlin噪声，1D，2D；unity自带的就是辣鸡
+** Desc: 生成Perlin噪声，1D，2D
 ** Vers: v1.0
 
 *************************************************************/
 
 using UnityEngine;
-using System.Collections;
-
-using RandomMapGenerator;
 
 namespace RandomMapGenerator
 {

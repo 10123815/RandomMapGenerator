@@ -8,9 +8,6 @@
 *************************************************************/
 
 using UnityEngine;
-using System.Collections;
-
-using RandomMapGenerator;
 
 namespace RandomMapGenerator
 {
